@@ -1,6 +1,10 @@
-# nix-search-tv
+# nix-search-tv-install
 
-Fuzzy search for NixOS packages.
+Fuzzy search for NixOS packages and install them easily with automatic insertion in `configuration.nix` and system rebuild.
+
+The `configuration.nix` file has to respect the [nixfmt](https://github.com/NixOS/nixfmt) formatting.
+
+Fork of [nix-search-tv](https://github.com/3timeslazy/nix-search-tv) with an `install` command. 
 
 ---
 
@@ -47,6 +51,14 @@ command = "nix-search-tv print"
 
 [preview]
 command = "nix-search-tv preview {}"
+
+[actions.install]
+description = "Install package and rebuild system"
+command = "sudo nix-search-tv install {}"
+mode = "execute"
+
+[keybindings]
+enter = "actions.install"
 ```
 
 or use the Home Manager option:
@@ -60,7 +72,7 @@ programs.nix-search-tv.enableTelevisionIntegration = true;
 The most straightforward integration might look like:
 
 ```sh
-alias ns="nix-search-tv print | fzf --preview 'nix-search-tv preview {}' --scheme history"
+alias ns="nix-search-tv print | fzf --preview 'nix-search-tv preview {}' --scheme history | xargs -I {} sudo nix-search-tv install {}"
 ```
 
 There is also a [nixpkgs.sh](./nixpkgs.sh) script which provides more advanced fzf integration. It is the same search but with the following shortcuts:
@@ -86,7 +98,16 @@ in {
 ### Nix Package
 
 ```nix
-environment.systemPackages = [ nix-search-tv ]
+environment.systemPackages = [ 
+    (nix-search-tv.overrideAttrs (oldAttrs: {
+      src = fetchFromGitHub {
+        owner = "gschurck";
+        repo = "nix-search-tv-install";
+        rev = "feat/add-install-command";
+        hash = "<latest_sha256_hash>";
+      };
+    }))
+]
 ```
 
 ### Flake
@@ -97,7 +118,7 @@ There are many ways how one can install a package from a flake, below is one:
 {
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    nix-search-tv.url = "github:3timeslazy/nix-search-tv";
+    nix-search-tv.url = "github:gschurck/nix-search-tv-install";
   };
 
   outputs = {
